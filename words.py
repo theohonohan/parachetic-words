@@ -1,7 +1,7 @@
 from collections import defaultdict
 
-words_file = open("linuxwords.txt")
-#words_file = open("collins_scrabble.txt")
+#words_file = open("linuxwords.txt")
+words_file = open("collins_scrabble.txt")
 
 words = words_file.read().split()
 
@@ -20,12 +20,6 @@ def check_word_property(word1, word2):
   
   if swaps > 1:
     return True
-
-def word_distance(first, second):
-  count = 0
-  for a, b, in zip(first.lower(),second.lower()):
-    if a!=b: count += 1
-  return count
 
 for word in words:
   sequence = []
@@ -50,9 +44,7 @@ def compare(val):
 
     for index2 in range(index,len(val)):
       word2 = val[index2]
-      if word1 != word2:
-        if word_distance(word1, word2) > 1:
-          if check_word_property(word1,word2):
+      if check_word_property(word1,word2):
             count = 0
             descriptor = []
             for a, b in zip(word1.lower(), word2.lower()):
