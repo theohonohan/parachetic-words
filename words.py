@@ -6,6 +6,7 @@ words_file = open("collins_scrabble.txt")
 words = words_file.read().split()
 
 patterns = defaultdict(list)
+results = defaultdict(list)
 
 def check_word_property(word1, word2):
   xfrm = []
@@ -21,28 +22,47 @@ def check_word_property(word1, word2):
   if swaps > 1:
     return True
 
+# Initial partition.  Tag each word with the the pattern of repeated
+# letters, e.g. HAMMERS -> HA22ERS,  LITTORAL -> 0I22ORA0.
 for word in words:
+  # First find the repeated letters.  For each letter that's
+  # repeated, remember the index of the first time we saw it.
+  seen = {}
+  dups = {}
+  for index, character in enumerate(word.lower()):
+    if character in dups:
+      pass
+    elif character in seen:
+      dups[character] = seen[character]
+    else:
+      seen[character] = index
+  # A word with no repeated letters is not interesting at all.
+  if len(dups) == 0:
+    continue
+  # Now replace each duplicated letter with the index of
+  # its first occurrence, to get the partition key.
   sequence = []
   for character in word.lower():
-    sequence.append(word.lower().find(character))
+    if character in dups:
+      sequence.append(dups[character])      
+    else:
+      sequence.append(character)
   tup = tuple(sequence)
-  patterns[tup].append(word)
+  if len(dups) == 1:
+    # There is only one repeated letter, so the set of
+    # words with this tag needs no further partitioning:
+    results[tup].append(word)
+  else:
+    # Multiple repeated letters, so we will need a second pass
+    # to figure out which words match and which don't.
+    patterns[tup].append(word)
 
-def search(vals):
-  for val in vals:
-    compare(val)
-
-def join(list):
-  new_list = []
-  for item in list:
-    new_list.extend(item)
-  return set(new_list)
 
 def compare(val):
   for index in range(len(val)):
     word1 = val[index]
 
-    for index2 in range(index,len(val)):
+    for index2 in range(index + 1, len(val)):
       word2 = val[index2]
       if check_word_property(word1,word2):
             count = 0
@@ -53,15 +73,15 @@ def compare(val):
               else:
                 descriptor.append(a)
               count += 1
-            results[tuple(descriptor)].append([word1,word2])
+            results[tuple(descriptor)].append(word1)
+            results[tuple(descriptor)].append(word2)
 
 
-vals = patterns.values()
-
-results = defaultdict(list)
-
-search(vals)
+for val in patterns.values():
+  # Partition again based on which letter(s) have to
+  # change to get from one word to another.
+  compare(val)
 
 for s in results.values():
-  s = join(s)
-  print(s)
+  if len(s) > 1:
+    print(set(s))
